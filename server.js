@@ -2,7 +2,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-const getRandomInt = max => Math.floor(Math.random() * max);
+let data;
 
 function sse(req, res) {
 	res.setHeader("Content-Type", "text/event-stream");
@@ -10,13 +10,13 @@ function sse(req, res) {
 	res.setHeader("Connection", "keep-alive");
 
 	let id = 0;
-	let data;
 
 	const timer = setInterval(() => {
-		data = getRandomInt(100);
-		res.write(`data: some data ${data}\n`);
-		res.write(`id: ${++id}\n`);
-		res.write("\n");
+		if (data !== undefined && data !== "") {
+			res.write(`data: ${data}\n`);
+			res.write(`id: ${++id}\n`);
+			res.write("\n");
+		}
 	}, 1000);
 
 	setTimeout(() => {
@@ -33,6 +33,12 @@ http.createServer((req, res) => {
 
 	if (url.pathname === "/stream") {
 		sse(req, res);
+		return;
+	}
+
+	if (url.pathname === "/send-message") {
+		data = url.searchParams.get("message");
+		res.end(data);
 		return;
 	}
 
