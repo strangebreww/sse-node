@@ -1,10 +1,14 @@
-const http = require("http");
-const fs = require("fs");
-const path = require("path");
+import { createServer } from "http";
+import { createReadStream } from "fs";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 let data;
 
-function sse(req, res) {
+function sse(_req, res) {
 	res.setHeader("Content-Type", "text/event-stream");
 	res.setHeader("Cache-Control", "no-cache");
 	res.setHeader("Connection", "keep-alive");
@@ -28,7 +32,7 @@ function sse(req, res) {
 	}, 10000);
 }
 
-http.createServer((req, res) => {
+createServer((req, res) => {
 	const url = new URL(`http://${req.headers.host}${req.url}`);
 
 	if (url.pathname === "/stream") {
@@ -42,7 +46,7 @@ http.createServer((req, res) => {
 		return;
 	}
 
-	const fileStream = fs.createReadStream(path.join(__dirname, "index.html"));
+	const fileStream = createReadStream(join(__dirname, "index.html"));
 	fileStream.pipe(res);
 }).listen(8080, () => {
 	console.log("Server started on port 8080");
