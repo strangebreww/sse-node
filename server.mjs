@@ -7,6 +7,8 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+let streamCount = 0;
+
 class SSE extends EventEmitter {
 	constructor() {
 		super();
@@ -33,7 +35,11 @@ class SSE extends EventEmitter {
 		this.on("data", dataListener);
 		req.on("close", () => {
 			this.removeListener("data", dataListener);
+			--streamCount;
+			console.log("Stream closed");
 		});
+
+		console.log(`Stream ${++streamCount} created`);
 	}
 
 	send(data) {
