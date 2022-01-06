@@ -12,7 +12,7 @@
 		const dataElem = document.getElementById("data");
 
 		eventSource.onmessage = (message) => {
-			dataElem.innerText = `id: ${message.lastEventId} data ${message.data}`;
+			dataElem.innerText = `id: ${message.lastEventId} data: ${message.data}`;
 		}
 
 		eventSource.addEventListener("end-of-stream", () => {

@@ -12,7 +12,7 @@ class SSE extends EventEmitter {
 		super();
 	}
 
-	init(_req, res) {
+	init(req, res) {
 		res.setHeader("Content-Type", "text/event-stream");
 		res.setHeader("Cache-Control", "no-cache");
 		res.setHeader("Connection", "keep-alive");
@@ -31,6 +31,9 @@ class SSE extends EventEmitter {
 		}
 
 		this.on("data", dataListener);
+		req.on("close", () => {
+			this.removeListener("data", dataListener);
+		});
 	}
 
 	send(data) {
@@ -39,6 +42,8 @@ class SSE extends EventEmitter {
 }
 
 const sse = new SSE();
+
+let data;
 
 createServer((req, res) => {
 	const url = new URL(`http://${req.headers.host}${req.url}`);
@@ -51,6 +56,7 @@ createServer((req, res) => {
 	if (url.pathname === "/send-message") {
 		data = url.searchParams.get("message");
 		sse.send({ data });
+		res.end("ok");
 		return;
 	}
 
