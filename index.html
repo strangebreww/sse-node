@@ -12,7 +12,7 @@
 
 		console.log("Start stream 1!");
 
-		for (let i = 2; i < 10; i++) {
+		for (let i = 2; i <= 20; i++) {
 			new EventSource("https://localhost:8080/stream");
 			console.log(`Start stream ${i}!`);
 		}

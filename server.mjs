@@ -19,6 +19,8 @@ class SSE extends EventEmitter {
 	init(stream, headers) {
 		let id = 0;
 
+		this.setMaxListeners(this.getMaxListeners() + 1);
+
 		const dataListener = (data) => {
 			stream.respond({
 				"Content-Type": "text/event-stream",
@@ -34,9 +36,11 @@ class SSE extends EventEmitter {
 		}
 
 		this.on("data", dataListener);
+
 		stream.on("close", () => {
 			this.removeListener("data", dataListener);
 			--streamCount;
+			this.setMaxListeners(this.getMaxListeners() - 1);
 			console.log("Stream closed");
 		});
 
