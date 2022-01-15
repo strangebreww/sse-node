@@ -8,12 +8,12 @@
 	<h1>SSE</h1>
 	<div id="data"></div>
 	<script>
-		const eventSource = new EventSource("http://localhost:8080/stream");
+		const eventSource = new EventSource("https://localhost:8080/stream");
 
 		console.log("Start stream 1!");
 
 		for (let i = 2; i < 10; i++) {
-			new EventSource("http://localhost:8080/stream");
+			new EventSource("https://localhost:8080/stream");
 			console.log(`Start stream ${i}!`);
 		}
 
