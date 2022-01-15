@@ -3,11 +3,13 @@ import { createReadStream, readFileSync } from "fs";
 import { constants, createSecureServer } from "http2";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { parseCookie } from "./parseCookie.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-const { HTTP2_HEADER_SCHEME, HTTP2_HEADER_PATH, HTTP2_HEADER_AUTHORITY, HTTP_STATUS_OK } = constants;
+const { HTTP2_HEADER_SCHEME, HTTP2_HEADER_PATH, HTTP2_HEADER_AUTHORITY, HTTP_STATUS_OK,
+	HTTP_STATUS_SEE_OTHER } = constants;
 
 let streamCount = 0;
 
@@ -19,18 +21,23 @@ class SSE extends EventEmitter {
 	init(stream, headers) {
 		let id = 0;
 
+		const cookie = headers.cookie ? parseCookie(headers.cookie) : {};
+
 		this.setMaxListeners(this.getMaxListeners() + 1);
 
+		stream.respond({
+			"Content-Type": "text/event-stream",
+			"Cache-Control": "no-cache"
+		});
+
 		const dataListener = (data) => {
-			stream.respond({
-				"Content-Type": "text/event-stream",
-				"Cache-Control": "no-cache"
-			});
+			console.log('data listener');
 
 			if (data.event) {
 				stream.write(`event: ${data.event}\n`);
 			}
-			stream.write(`data: ${data.data}\n`);
+
+			stream.write(`data: user ${cookie.name ?? "anonymous"} ${data.data}\n`);
 			stream.write(`id: ${++id}\n`);
 			stream.write("\n");
 		}
@@ -55,8 +62,8 @@ class SSE extends EventEmitter {
 const sse = new SSE();
 
 const server = createSecureServer({
-  	key: readFileSync('localhost-privkey.pem'),
- 	cert: readFileSync('localhost-cert.pem')
+	key: readFileSync('localhost-privkey.pem'),
+	cert: readFileSync('localhost-cert.pem')
 });
 
 server.on("stream", (stream, headers) => {
@@ -68,7 +75,17 @@ server.on("stream", (stream, headers) => {
 
 	if (url.pathname === "/stream") {
 		sse.init(stream, headers);
+
 		return;
+	}
+
+	if (url.pathname === "/login") {
+		const name = url.searchParams.get("name");
+		stream.respond({
+			"set-cookie": `name=${name}`,
+			":status": HTTP_STATUS_SEE_OTHER,
+			"location": "/"
+		});
 	}
 
 	if (url.pathname === "/send-message") {
@@ -78,6 +95,7 @@ server.on("stream", (stream, headers) => {
 			":status": HTTP_STATUS_OK
 		});
 		stream.end("ok");
+
 		return;
 	}
 
